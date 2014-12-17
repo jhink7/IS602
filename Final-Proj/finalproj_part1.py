@@ -91,12 +91,6 @@ if __name__ == "__main__":
     plt.ylabel('f(x) with noise')
     plt.show()
 
-    from zipline.algorithm import TradingAlgorithm
-    from zipline.algorithm import TradingAlgorithm
-    from zipline.transforms import MovingAverage, batch_transform
-    from zipline.utils.factory import load_from_yahoo
-    #data = load_from_yahoo(stocks=['AAPL', 'PEP', 'KO']); data.save('talk_px.dat')
-
     # Basic filtering of a signal
     numSamples  = 100 # number of samples
 
