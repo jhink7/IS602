@@ -1,10 +1,32 @@
+# filter the Fourier transform with a simple bandpass filter
+def filter_rule(x,freq):
+    buff = 0.5
+    highCut = 16
+    lowCut = 8
+    if abs(freq)> (highCut+buff) or abs(freq)<(lowCut-buff):
+        return 0
+    else:
+        return x
+
+# method that generates our filtered signal
+def getfilteredsignal(yf_noise, f):
+    filteredSignal = []
+    for x in range(0, len(f)):
+        temp = filter_rule(yf_noise[x],f[x])
+        filteredSignal.append(temp)
+
+    return filteredSignal
+
 if __name__ == "__main__":
     import numpy as np
     from scipy.optimize import curve_fit
     import matplotlib.pyplot as plt
+    from array import array
     from scipy.stats import norm
-    from scipy.stats import cauchy
     from scipy.fftpack import fft
+    from scipy.fftpack import ifft
+    from scipy.fftpack import fftfreq
+    from pylab import *
     import math
     pi = math.pi
 
@@ -66,11 +88,54 @@ if __name__ == "__main__":
     plt.grid()
     plt.title("Part 1b Fourier Analysis")
     plt.xlabel('x')
-    plt.ylabel('f(x)')
+    plt.ylabel('f(x) with noise')
     plt.show()
 
     from zipline.algorithm import TradingAlgorithm
     from zipline.algorithm import TradingAlgorithm
     from zipline.transforms import MovingAverage, batch_transform
     from zipline.utils.factory import load_from_yahoo
-    data = load_from_yahoo(stocks=['AAPL', 'PEP', 'KO']); data.save('talk_px.dat')
+    #data = load_from_yahoo(stocks=['AAPL', 'PEP', 'KO']); data.save('talk_px.dat')
+
+    # Basic filtering of a signal
+    numSamples  = 100 # number of samples
+
+    # create pure signal
+    f_signal  = 8   # signal frequency  in Hz
+    dt = 0.01 # sample timing in seconds
+    amp  = 1    # signal amplitude
+    s = [amp*sin((2*pi)*f_signal*k*dt) + 2*amp*sin((2*pi)*f_signal*2*k*dt) for k in range(0,numSamples)]
+    s_time = [k*dt for k in range(0,numSamples)]
+
+    # simulate measurement noise
+    from random import gauss
+    mu = 0
+    sigma = 2
+    n = [gauss(mu,sigma) for k in range(0,numSamples)]
+
+    # add noise to our pure signal
+    s_noise = [ss+nn for ss,nn in zip(s,n)]
+
+    # Get spectrum of the time domain signal
+    F = fft(s_noise)
+
+    # get frequencies for each FFT sample
+    f = fftfreq(len(F),dt)  # get sample frequency in Hz
+
+    Ffilt = []
+
+    # apply a filter to the signal to de-noise it
+    Ffilt = getfilteredsignal(F,f)
+    Ffilt = array(Ffilt)
+
+    # create the time domain signal from our filtered spectrum
+    sFilt = ifft(Ffilt)
+
+    #plot results
+    plt.plot(s_time, sFilt)
+    plt.plot(s_time, s)
+    plt.title("Part 1b Fourier Analysis, Filtering)")
+    plt.xlabel('Time[s]')
+    plt.ylabel('f(x)')
+    plt.legend(['Filtered Signal','Original Signal'])
+    plt.show()
